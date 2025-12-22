@@ -1,123 +1,109 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import profileData from "@/src/data/profile.json";
+import { motion } from "framer-motion";
 
 export default function Navbar() {
   const { name } = profileData;
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("");
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+      
+      const sections = ["hero", "about", "skills", "projects", "contact"];
+      const current = sections.find((section) => {
+        const element = document.getElementById(section);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          return rect.top <= 100 && rect.bottom >= 100;
+        }
+        return false;
+      });
+      setActiveSection(current || "");
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   const navLinks = [
-    { href: "#about", label: "About" },
-    { href: "#skills", label: "Skills" },
-    { href: "#projects", label: "Projects" },
-    { href: "#contact", label: "Contact" },
+    { id: "about", label: "About" },
+    { id: "skills", label: "Skills" },
+    { id: "projects", label: "Projects" },
+    { id: "contact", label: "Contact" },
   ];
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
-
   return (
-    <nav className="sticky top-0 z-50 border-b border-neutral-200 bg-white/80 backdrop-blur-sm dark:border-neutral-800 dark:bg-neutral-900/80">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <Link
-            href="/"
-            className="text-lg font-semibold text-neutral-900 transition-colors hover:text-neutral-600 dark:text-neutral-100 dark:hover:text-neutral-400"
-            onClick={closeMobileMenu}
+    <motion.nav
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.5 }}
+      className={`sticky top-0 z-50 border-b transition-all duration-300 ${
+        scrolled
+          ? "glass border-cyan-500/20 bg-[#151520]/80 backdrop-blur-md shadow-[0_0_20px_rgba(0,255,255,0.1)]"
+          : "border-transparent bg-transparent"
+      }`}
+    >
+      <div className="mx-auto max-w-7xl px-6 py-4">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => scrollToSection("hero")}
+            className="text-lg font-bold transition-all duration-300 hover:scale-105"
           >
-            {name.split(" ")[0]}
-          </Link>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex md:items-center md:gap-6">
-            {navLinks.slice(0, -1).map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm font-medium text-neutral-700 transition-colors hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-neutral-100"
+            <span className="gradient-text">{name.split(" ")[0]}</span>
+          </button>
+          <div className="hidden items-center gap-6 md:flex">
+            {navLinks.map((link) => (
+              <button
+                key={link.id}
+                onClick={() => scrollToSection(link.id)}
+                className={`relative text-sm font-medium transition-all duration-300 ${
+                  activeSection === link.id
+                    ? "text-cyan-300"
+                    : "text-neutral-400 hover:text-cyan-400"
+                }`}
               >
                 {link.label}
-              </Link>
+                {activeSection === link.id && (
+                  <motion.div
+                    layoutId="activeSection"
+                    className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-500 to-purple-500"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+              </button>
             ))}
-            <Link
-              href={navLinks[navLinks.length - 1].href}
-              className="rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
+            <button
+              onClick={() => scrollToSection("contact")}
+              className="rounded-full bg-gradient-to-r from-cyan-500 to-purple-500 px-4 py-2 text-sm font-medium text-white transition-all duration-300 hover:scale-105 hover:shadow-[0_0_15px_rgba(0,255,255,0.5)]"
             >
-              {navLinks[navLinks.length - 1].label}
-            </Link>
+              Get In Touch
+            </button>
           </div>
-
+          
           {/* Mobile Menu Button */}
           <button
-            type="button"
-            className="inline-flex items-center justify-center rounded-md p-2 text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-neutral-500 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-100 md:hidden"
-            aria-expanded="false"
-            aria-label="Toggle navigation menu"
-            onClick={toggleMobileMenu}
+            className="md:hidden text-cyan-400"
+            onClick={() => {
+              // Mobile menu can be added later
+              scrollToSection("contact");
+            }}
           >
-            <span className="sr-only">Open main menu</span>
-            {!isMobileMenuOpen ? (
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                />
-              </svg>
-            ) : (
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            )}
+            Menu
           </button>
         </div>
       </div>
-
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden">
-          <div className="space-y-1 border-t border-neutral-200 px-2 pb-3 pt-2 dark:border-neutral-800">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="block rounded-md px-3 py-2 text-base font-medium text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
-                onClick={closeMobileMenu}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-    </nav>
+    </motion.nav>
   );
 }
-
-
